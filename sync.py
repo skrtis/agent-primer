@@ -5,7 +5,8 @@ Usage: python3 sync.py PATH_TO_VAULT/concepts
 
 Reads "agent primer/*.md" and "agent reading list.md", turns Obsidian
 wikilinks into normal links, adds the front matter the theme needs, and
-leaves out any sentence that names an unpublished project (PRIVATE).
+leaves out Obsidian %% comments %% and any sentence that names an
+unpublished project (PRIVATE).
 """
 import pathlib
 import re
@@ -66,7 +67,8 @@ def markdown_fixes(text):
 
 
 def build(src, dest, title, order, removed, extra=""):
-    text = src.read_text()
+    # %% ... %% is an Obsidian comment (notes to self); it never goes public.
+    text = re.sub(r"%%.*?%%", "", src.read_text(), flags=re.S)
     text = drop_private(wikilinks(text), removed)
     text = markdown_fixes(text)
     fm = f'---\ntitle: "{title}"\nnav_order: {order}\n{extra}---\n\n'
