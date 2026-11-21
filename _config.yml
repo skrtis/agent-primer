@@ -1,0 +1,20 @@
+title: Agent primer
+description: A plain introduction to how AI agents work, meant to be read before the sources.
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+search_enabled: true
+heading_anchors: true
+back_to_top: true
+back_to_top_text: "Back to top"
+exclude:
+  - sync.py
+  - README.md
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
