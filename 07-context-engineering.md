@@ -7,7 +7,9 @@ nav_order: 8
 
 ## What it is
 
-**Context engineering** means deciding what goes into the model's input on every turn of the loop, aiming for the smallest set of high-signal tokens that gets the job done ([Anthropic](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents)). Unlike writing a prompt once, these decisions happen continuously as tool results pile up, mostly handled by the harness.
+A prompt is written once, but an agent's input changes on every turn as tool results pile up. Managing that changing input is **context engineering**, and the harness handles most of it.
+
+> **Context engineering:** deciding what goes into the model's input on every turn of the loop, aiming for the smallest set of high-signal tokens that gets the job done ([Anthropic](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents)).
 
 ## How context goes wrong
 

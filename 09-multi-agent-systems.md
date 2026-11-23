@@ -7,7 +7,11 @@ nav_order: 10
 
 ## How they work and why they help
 
-A **multi-agent system** splits one task across several agents, each running its own loop and its own context window. The most common setup is the **orchestrator-worker pattern**: a lead agent (**orchestrator**) plans the work, launches **subagents** with fresh contexts and separate instructions, and combines their condensed summaries into a final answer.
+Instead of one agent doing everything, a task can be split across a **multi-agent system**.
+
+> **Multi-agent system:** one task split across several agents, each running its own loop and its own context window.
+
+The most common setup is the **orchestrator-worker pattern**: a lead agent (**orchestrator**) plans the work, launches **subagents** with fresh contexts and separate instructions, and combines their condensed summaries into a final answer.
 
 Two main advantages drive the gains:
 

@@ -7,7 +7,11 @@ nav_order: 11
 
 ## Why agents need dedicated testing
 
-An **eval** (short for evaluation) is a test suite measuring how well an AI system performs. Intuition fails for agents for two reasons:
+Checking whether a change to an agent actually helped takes an **eval**.
+
+> **Eval (evaluation):** a test suite measuring how well an AI system performs.
+
+Intuition fails for agents for two reasons:
 
 1. **Run-to-run randomness:** giving the exact same agent the exact same task twice can lead to different steps and different final answers.
 2. **High sensitivity:** small wording changes to a prompt or tool can cause unexpected drops (such as the -3% Claude Code drop from one line on [page 4](04-prompts.md)).
@@ -39,8 +43,9 @@ For `LLM-as-judge`, ask a **single yes/no question** about one specific failure 
 
 Two metrics summarize repeated trials, and they move in opposite directions as `k` grows:
 
-- **`pass@k`:** chance that *at least one* of `k` trials succeeds. Useful when you can try several times and keep any working answer.
-- **`pass^k`:** chance that *all* `k` trials succeed ([τ-bench](https://arxiv.org/abs/2406.12045)). Useful when the agent has to be reliable every single time.
+| **`pass@k`** | **`pass^k`** |
+|---|---|
+| Chance that *at least one* of `k` trials succeeds. Useful when you can try several times and keep any working answer. | Chance that *all* `k` trials succeed ([τ-bench](https://arxiv.org/abs/2406.12045)). Useful when the agent has to be reliable every single time. |
 
 If an agent succeeds 75% of the time on a single try:
 
@@ -51,8 +56,9 @@ The same agent looks nearly perfect under `pass@3` and unreliable under `pass^3`
 
 ## Capability vs. regression evals
 
-- **Capability evals:** tasks the agent currently struggles on (low pass rate), giving you a clear target to improve toward.
-- **Regression evals:** tasks the agent already passes near 100%, catching changes that accidentally break working behavior ([Anthropic](https://www.anthropic.com/research/demystifying-evals-for-ai-agents)).
+| **Capability evals** | **Regression evals** |
+|---|---|
+| Tasks the agent currently struggles on (low pass rate), giving you a clear target to improve toward. | Tasks the agent already passes near 100%, catching changes that accidentally break working behavior ([Anthropic](https://www.anthropic.com/research/demystifying-evals-for-ai-agents)). |
 
 ## Practical rules
 

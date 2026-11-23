@@ -26,7 +26,11 @@ Public discussion often mixes together three very different ideas ([Schmid](http
 
 ## What AI labs mean by RSI
 
-In frontier lab safety frameworks, **recursive self-improvement (RSI)** has a specific meaning: AI fully autonomously designing and building its own successor ([Anthropic](https://www.anthropic.com/institute/recursive-self-improvement)). Anthropic's view is that this has not happened and is not inevitable; AI already writes most code at Anthropic and speeds up research, but humans still choose goals and supply research judgment.
+In frontier lab safety frameworks, **recursive self-improvement (RSI)** has a narrower meaning than in public discussion.
+
+> **Recursive self-improvement (RSI):** AI fully autonomously designing and building its own successor ([Anthropic](https://www.anthropic.com/institute/recursive-self-improvement)).
+
+Anthropic's view is that this has not happened and is not inevitable; AI already writes most code at Anthropic and speeds up research, but humans still choose goals and supply research judgment.
 
 An [independent assessment by METR](https://metr.org/blog/2026-11-05-anthropic-ai-rd-acceleration-assessment) estimated that capability progress on well-defined tasks at Anthropic was running at roughly **2×** its earlier pace, mostly due to AI. METR noted clear limits to that estimate: key internal evidence was withheld, it could not test unreleased models, and speedups may concentrate on tasks that can be graded automatically.
 

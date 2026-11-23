@@ -90,5 +90,49 @@ Compiled 2026-11-19. Every link was opened and checked.
 - Cao et al., [Mozi](https://arxiv.org/abs/2603.03655) (2026). Target-to-lead pipeline with human checkpoints at uncertain decisions.
 - Benchmarks: [BixBench](https://arxiv.org/abs/2503.00096), [LABBench2](https://arxiv.org/abs/2604.09554)
 
+## Stanford CS 329Z readings
+The recommended readings from [CS 329Z: Engineering AI Agents](https://cs329z.stanford.edu/) (Stanford, Fall 2026) that weren't already on this list, in course order. The course's other 17 readings are already above (for the MCP spec and Anthropic's RSP, as newer versions).
+
+- Zaharia et al., [The Shift from Models to Compound AI Systems](https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/) (BAIR, Feb 2024). Top results come from systems of models, retrievers and tools, not single models.
+- Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (NeurIPS 2017). The Transformer.
+- Katharopoulos et al., [Transformers are RNNs](https://arxiv.org/abs/2006.16236) (ICML 2020). Linear attention; why long context is costly.
+- Karpukhin et al., [Dense Passage Retrieval](https://arxiv.org/abs/2004.04906) (EMNLP 2020). Embedding search beat keyword search (BM25) by 9–19% on top-20 retrieval.
+- Khattab and Zaharia, [ColBERT](https://arxiv.org/abs/2004.12832) (SIGIR 2020). Fast token-level retrieval.
+- Patil et al., [Gorilla](https://arxiv.org/abs/2305.15334) (NeurIPS 2024). Writing correct API calls; bad retrieved docs can be worse than none.
+- Khattab et al., [DSPy](https://arxiv.org/abs/2310.03714) (ICLR 2024). Tune prompts against a metric instead of writing them by hand.
+- LangChain, [LangGraph overview](https://docs.langchain.com/oss/python/langgraph/overview) (docs). Checkpoint and resume for long runs.
+- Pan et al. (Arena and Berkeley), [HarnessTax: How Much Does the Harness Matter for Coding Agents?](https://arena.ai/blog/coding-agents-harness-tax) (Sep 2026). 21 model–harness pairs, 3 runs per task: the harness moved success by ±2–5% but cost by up to 5×.
+- Yao et al., [ReAct](https://arxiv.org/abs/2210.03629) (ICLR 2023). Reasoning steps interleaved with tool actions.
+- LangChain, [Context Engineering](https://www.langchain.com/blog/context-engineering-for-agents) (Jul 2025). Write, select, compress, isolate.
+- Shinn et al., [Reflexion](https://arxiv.org/abs/2303.11366) (NeurIPS 2023, optional). Self-critique helps only when the check it relies on is reliable.
+- Sumers et al., [Cognitive Architectures for Language Agents](https://arxiv.org/abs/2309.02427) (TMLR 2024). CoALA.
+- Wu et al., [AutoGen](https://arxiv.org/abs/2308.08155) (COLM 2024). Agents that talk to each other; a narrow safety-checker agent helped.
+- Agrawal et al., [GEPA](https://arxiv.org/abs/2507.19457) (ICLR 2026). Evolves prompts from written feedback on runs; beat RL fine-tuning with far fewer runs.
+- Opsahl-Ong et al., [MIPRO](https://arxiv.org/abs/2406.11695) (EMNLP 2024). Tunes instructions and examples together.
+- Shao et al., [DeepSeekMath](https://arxiv.org/abs/2402.03300) (2024). Introduced GRPO.
+- [Terminal-Bench leaderboard](https://www.tbench.ai/). Scores with confidence intervals and cost per model and harness.
+- Merrill et al., [Terminal-Bench](https://arxiv.org/abs/2601.11868) (ICLR 2026). How to build and audit hard agent tasks; at least 5 runs per setup.
+- Shreya Shankar, [Data Flywheels for LLM Applications](https://www.sh-reya.com/blog/ai-engineering-flywheel/) (Jul 2024). Choose metrics by reading real outputs.
+- Tan et al., [Large Language Models for Data Annotation and Synthesis: A Survey](https://aclanthology.org/2024.emnlp-main.54/) (EMNLP 2024, optional).
+- Yang et al., [SWE-smith](https://arxiv.org/abs/2504.21798) (NeurIPS 2025). Thousands of tasks made by planting bugs in real code.
+- Shankar et al., [Who Validates the Validators?](https://arxiv.org/abs/2404.12272) (UIST 2024). Grading outputs changes your criteria; check judges against your own grades.
+- Zhou et al., [LIMA](https://arxiv.org/abs/2305.11206) (NeurIPS 2023, optional). 1,000 hand-picked examples were enough.
+- Ofir Press, [How to Build Good Language Modeling Benchmarks](https://ofir.io/How-to-Build-Good-Language-Modeling-Benchmarks/) (2024, optional). Real tasks, automatic scoring, never publish the answers.
+- Polo et al., [tinyBenchmarks](https://arxiv.org/abs/2402.14992) (ICML 2024, optional). Small subsets that predict full benchmark scores.
+- Zheng et al., [Judging LLM-as-a-Judge](https://arxiv.org/abs/2306.05685) (NeurIPS 2023). Judge biases (answer order, length, self-preference) and fixes.
+- Ryan et al., [AutoMetrics](https://arxiv.org/abs/2512.17267) (ICLR 2026). Metrics built from under 100 human ratings.
+- Zhu et al., [AutoLibra](https://arxiv.org/abs/2505.02820) (ICLR 2026, optional). Turns free-text feedback on runs into metrics a judge scores.
+- Jimenez et al., [SWE-bench](https://arxiv.org/abs/2310.06770) (ICLR 2024). Real GitHub issues; compares issues from before and after the training cutoff to check for memorization.
+- Shao et al., [PrivacyLens](https://arxiv.org/abs/2409.00138) (NeurIPS 2024). Agents leak private data in action even when they answer privacy questions correctly.
+- Zhang and Yang, [Searching for Privacy Risks in LLM Agents via Simulation](https://arxiv.org/abs/2508.10880) (2025). Attacks and defenses evolved against each other.
+- Li, [Agentic LLMs as Powerful Deanonymizers](https://arxiv.org/abs/2601.05918) (Jan 2026). Web agents traced anonymized scientist interviews to their papers.
+- Wen et al., [Contextualized Privacy Defense for LLM Agents](https://arxiv.org/abs/2603.02983) (2026, optional).
+- OpenAI, [Understanding prompt injections](https://openai.com/index/prompt-injections/) (Nov 2025, optional).
+- Wang et al., [OpenHands](https://arxiv.org/abs/2407.16741) (ICLR 2025). Open coding-agent platform; its benchmarks include BioCoder.
+- Anthropic, [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices) (docs, optional). The course's 2025 post now redirects here.
+- Shaikh et al., [Creating General User Models from Computer Use](https://arxiv.org/abs/2505.10831) (UIST 2025).
+- Shaikh et al., [Learning Next Action Predictors from Human-Computer Interaction](https://arxiv.org/abs/2603.05923) (2026, optional).
+- [OpenClaw](https://github.com/openclaw/openclaw) (optional). Open-source personal assistant.
+
 ## Not checked yet
 - OpenAI blocked automated fetches. Open these yourself: "Harness engineering" (Lopopolo) and "Unrolling the Codex agent loop" (Bolin).

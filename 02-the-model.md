@@ -18,10 +18,13 @@ An LLM predicts one **token** at a time (a short piece of text, roughly 3 to 4 E
 
 Once training finishes, the model's weights do not change while you use it. Anything the model appears to "learn" during a session lives only in its input text, never in its weights.
 
-## LLMs are stateless: 
-> Stateless: the model keeps nothing from one call to the next. Every call starts fresh, so the model has only its training and the text sent in that call to work with.
+## LLMs are stateless
 
-Using an LLM means sending it input text and getting output text back (one **call**). When you send a 10-message conversation plus one new message, the model reads all 11 messages from scratch, writes a reply, and forgets everything again. If an agent read a file ten steps ago and that file is no longer in the input, the model has no idea what it said.
+Using an LLM means sending it input text and getting output text back (one **call**), and each call is **stateless**.
+
+> **Stateless:** the model keeps nothing from one call to the next. Every call starts fresh, so the model has only its training and the text sent in that call to work with.
+
+When you send a 10-message conversation plus one new message, the model reads all 11 messages from scratch, writes a reply, and forgets everything again. If an agent read a file ten steps ago and that file is no longer in the input, the model has no idea what it said.
 
 Context management ([page 3](03-context.md)), harnesses ([page 6](06-the-harness.md)), and memory ([page 8](08-memory.md)) all exist to work around this single limit.
 

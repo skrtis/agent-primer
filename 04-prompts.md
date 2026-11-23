@@ -7,15 +7,17 @@ nav_order: 5
 
 ## Prompt engineering and in-context learning
 
+What works in a **prompt** depends heavily on the specific model, so **prompt engineering** means testing prompts rather than guessing ([Weng](https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/)).
+
 > **Prompt:** the text you give a model to steer its output.
 
 > **Prompt engineering:** writing prompts that reliably produce the behavior you want, without changing the model's weights.
 
-What works depends heavily on the specific model, so prompts have to be tested rather than guessed ([Weng](https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/)).
+Prompting works because of **in-context learning (ICL)**.
 
 > **In-context learning (ICL):** a model picking up a new task solely from instructions or examples in its input, with its weights unchanged.
 
-Prompting relies on ICL, in two main forms:
+ICL comes in two main forms:
 
 | **Zero-shot** | **Few-shot** |
 |---|---|
@@ -23,11 +25,15 @@ Prompting relies on ICL, in two main forms:
 
 Inside an agent, this learning continues through the whole run: error messages, the existing code style in a repository, and earlier tool outputs all shape the model's next turn, which is also why mistakes or clutter in context degrade later steps.
 
+A widely used prompting technique is **chain-of-thought (CoT)**.
+
 > **Chain-of-thought (CoT):** prompting the model to write out its reasoning step by step before answering.
 
 Newer reasoning models already do this automatically through extended thinking ([page 2](02-the-model.md)), so you rarely need to ask for it explicitly.
 
 ## The system prompt
+
+Every agent has a **system prompt**.
 
 > **System prompt:** the standing instructions sent in the `system` role at the start of every call.
 

@@ -38,7 +38,11 @@ Each step can go wrong:
 
 ## RAG (retrieval-augmented generation)
 
-**RAG** looks up relevant passages from a collection of documents and puts them into the context before the model answers ([Lewis et al.](https://arxiv.org/abs/2005.11401)). The standard setup ([Anthropic](https://www.anthropic.com/research/contextual-retrieval)):
+Finding the right note or passage is usually done with **RAG**.
+
+> **RAG (retrieval-augmented generation):** looking up relevant passages from a collection of documents and putting them into the context before the model answers ([Lewis et al.](https://arxiv.org/abs/2005.11401)).
+
+The standard setup ([Anthropic](https://www.anthropic.com/research/contextual-retrieval)):
 
 1. Split documents into short **chunks**.
 2. Search with two methods combined: **embedding** search in a **vector store** (finds passages with similar meaning) plus **BM25** keyword search (catches exact IDs, gene names, or error codes that embeddings miss).

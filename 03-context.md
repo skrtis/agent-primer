@@ -7,9 +7,9 @@ nav_order: 4
 
 ## What goes into context
 
-> **Context:** the entire block of text (tokens) the model receives in a single call ([Anthropic](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents)). 
+Because the model remembers nothing between calls, everything it can use in a call has to be in that call's **context**.
 
-Because the model remembers nothing between calls, the context is its entire world for that turn.
+> **Context:** the entire block of text (tokens) the model receives in a single call ([Anthropic](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents)).
 
 In a chat app, context is mostly the conversation so far. In an agent, one call usually includes:
 
@@ -31,23 +31,23 @@ Harnesses often insert their own text (such as `CLAUDE.md`, hook outputs, and re
 
 ## The context window and why longer inputs hurt
 
+Every call also has to fit inside the model's **context window**.
+
 > **Context window:** the maximum number of tokens a model can handle in one call, counting both input and output (typically 200,000 to 1,000,000 tokens today).
 
-Agents fill this quickly because every tool result stays in the message list. Reading 20 files and running a test suite a dozen times can fill a window within one task, forcing the harness to trim or summarize older turns ([page 7](07-context-engineering.md)).
+Agents fill their context windows quickly because every tool result stays in the message list. Reading 20 files and running a test suite a dozen times can fill a window within one task, forcing the harness to trim or summarize older turns ([page 7](07-context-engineering.md)).
 
-Even before you hit the hard limit, packing more text into context hurts accuracy. Three terms describe how:
+Even before you hit the hard limit, packing more text into context hurts accuracy. [Chroma](https://www.trychroma.com/research/context-rot) tested 18 models, holding task difficulty fixed and only adding more input text, and performance dropped steadily as inputs got longer, even on simple tasks. They call this **context rot**.
 
 > **Context rot:** the drop in a model's accuracy as its input gets longer, even when the task itself stays equally easy.
 
-[Chroma](https://www.trychroma.com/research/context-rot) tested 18 models, holding task difficulty fixed and only adding more input text, and performance dropped steadily as inputs got longer, even on simple tasks.
+Where information sits in a long input also matters. [Liu et al.](https://arxiv.org/abs/2307.03172) found that on question answering over many documents, accuracy was highest when the document holding the answer came first or last, an effect they named **lost in the middle**. The size of the effect varies across newer models and tasks.
 
 > **Lost in the middle:** a model uses information at the start or end of a long input more reliably than information buried in the middle.
 
-[Liu et al.](https://arxiv.org/abs/2307.03172) found this on question answering over many documents, where accuracy was highest when the document holding the answer came first or last. The size of the effect varies across newer models and tasks.
+[Anthropic](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents) explains why extra text is never free with the idea of an **attention budget**: irrelevant text competes with relevant text for the model's attention.
 
 > **Attention budget:** the limited attention a model spreads across everything in its input, so each extra token takes a little attention away from the rest.
-
-[Anthropic](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents) uses this to explain why irrelevant text is not free: it competes with the relevant text for the model's attention.
 
 The goal is not fitting as much as possible into the window, but keeping the signal-to-noise ratio high on every call.
 

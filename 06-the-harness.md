@@ -7,7 +7,11 @@ nav_order: 7
 
 ## What the harness is
 
-The **harness** is all the software wrapped around a language model to turn it into an agent: "if you're not the model, you're the harness" ([Trivedy](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness)). A source-code study of 11 production coding agents (including Claude Code, Codex CLI, and Gemini CLI) groups its jobs into six areas: running the loop, providing tools, managing context, enforcing safety checks, coordinating work, and supporting extensions like MCP servers, skills, and hooks ([Barbaste et al.](https://arxiv.org/abs/2609.00006)).
+An agent is a model plus its **harness**. As [Trivedy](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness) puts it, "if you're not the model, you're the harness."
+
+> **Harness:** all the software wrapped around a language model to turn it into an agent.
+
+A source-code study of 11 production coding agents (including Claude Code, Codex CLI, and Gemini CLI) groups its jobs into six areas: running the loop, providing tools, managing context, enforcing safety checks, coordinating work, and supporting extensions like MCP servers, skills, and hooks ([Barbaste et al.](https://arxiv.org/abs/2609.00006)).
 
 People use "harness" at three different scales:
 
@@ -73,7 +77,11 @@ Bottom line: the harness matters, its benefit depends on the model, and any clai
 
 ## The Claude Agent SDK
 
-The **Claude Agent SDK** is Claude Code packaged as a library for Python (`claude-agent-sdk`) and TypeScript. It gives your own code the same agent loop, built-in tools, and context management that run Claude Code ([Agent SDK docs](https://code.claude.com/docs/en/agent-sdk/overview)). It sits between two other ways of using Claude:
+Instead of writing a harness from scratch, you can start from Claude Code's with the **Claude Agent SDK**.
+
+> **Claude Agent SDK:** Claude Code packaged as a library for Python (`claude-agent-sdk`) and TypeScript.
+
+It gives your own code the same agent loop, built-in tools, and context management that run Claude Code ([Agent SDK docs](https://code.claude.com/docs/en/agent-sdk/overview)). It sits between two other ways of using Claude:
 
 - **Messages API:** one request, one response. You write the loop from [page 1](01-what-an-agent-is.md) yourself and define every tool, which gives you exact control over what each request contains.
 - **Claude Code:** the finished coding agent, used interactively.
