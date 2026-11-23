@@ -19,14 +19,15 @@ On every call, the harness sends a **tool definition** for each available tool c
 2. **Description** (plain text explaining what the tool does and when to use it)
 3. **Input format** (usually written in **JSON Schema**, listing each input's name, type, and whether it is required)
 
-One tool exchange (often called **function calling**) looks like this:
+One tool exchange (often called **function calling**) has two steps. First, the model outputs a structured tool request and stops writing:
 
 ```json
-// 1. Model outputs a structured tool request and stops writing
 { "tool": "read_file", "arguments": { "path": "src/train.py" } }
+```
 
-// 2. Harness checks permissions, runs the tool, trims huge outputs,
-//    and sends the result back to the model in the next call
+Then the harness checks permissions, runs the tool, trims huge outputs, and sends the result back to the model in the next call:
+
+```json
 { "tool_result": "def train(cfg):\n    ..." }
 ```
 

@@ -90,8 +90,8 @@ Compiled 2026-11-19. Every link was opened and checked.
 - Cao et al., [Mozi](https://arxiv.org/abs/2603.03655) (2026). Target-to-lead pipeline with human checkpoints at uncertain decisions.
 - Benchmarks: [BixBench](https://arxiv.org/abs/2503.00096), [LABBench2](https://arxiv.org/abs/2604.09554)
 
-## Stanford CS 329Z readings
-The recommended readings from [CS 329Z: Engineering AI Agents](https://cs329z.stanford.edu/) (Stanford, Fall 2026) that weren't already on this list, in course order. The course's other 17 readings are already above (for the MCP spec and Anthropic's RSP, as newer versions).
+## Not incorporated yet
+Recommended readings from Stanford's [CS 329Z: Engineering AI Agents](https://cs329z.stanford.edu/) (Fall 2026) that the primer pages don't use yet, in course order. The course's other 17 readings are already in the sections above (for the MCP spec and Anthropic's RSP, as newer versions).
 
 - Zaharia et al., [The Shift from Models to Compound AI Systems](https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/) (BAIR, Feb 2024). Top results come from systems of models, retrievers and tools, not single models.
 - Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (NeurIPS 2017). The Transformer.
