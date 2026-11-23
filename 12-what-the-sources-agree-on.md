@@ -1,33 +1,28 @@
 ---
-title: "12. What the sources agree on"
+title: "12. Core principles"
 nav_order: 13
 ---
 
-# 12. What the sources agree on
+# 12. Core principles
 
-The sources behind this primer were written by different people at different companies over several years, and they often use different words. Underneath those differences, the same handful of ideas comes up again and again. This page collects them, because together they are a good summary of how to think about agents.
+Across engineering blogs and research papers, people use different terminology, but eight core principles come up again and again:
 
-The first idea is that the model only produces text and the harness does everything else. The model writes a request, and the harness runs the tool, applies the permissions and keeps the records. This division explains why the same model can behave very differently in different harnesses, and why so much engineering effort goes into the software around the model rather than into the model itself.
+1. **The model only produces text; the harness does everything else.** Running tools, checking permissions, isolating code in sandboxes, building the context, and saving records all live in ordinary software. That is why the same model behaves differently in different harnesses and why benchmark scores belong to the model and harness together.
+2. **Context is the scarce resource.** Models see only their current input, windows have limits, and irrelevant text actively lowers accuracy. Consolidated tools, on-demand skills, writing code instead of serial tool calls, compaction, subagents, and just-in-time retrieval are all ways of keeping the context small and clean.
+3. **Anything that needs to last belongs outside the model.** Models forget everything between calls and sessions end. Progress, plans, and knowledge should live in files, logs, and version control, loaded back into context only when needed.
+4. **Start simple and make every layer earn its place.** Prefer a single call or fixed workflow over an open-ended agent loop, plain hand-written loops over heavy frameworks, plain files plus text search over specialized memory stacks, and one writer over parallel multi-agent editing unless measurements show a real win.
+5. **Separate doing from checking.** Models judge their own work too kindly. Pair upfront rules (guides) with independent checks (sensors: exact code tests and linters first, separate clean-context reviewers or calibrated model judges second). Reliable checking is also the main limit on self-improvement.
+6. **Tool design matters as much as prompting.** Tool names, descriptions, input formats, return values, and error messages are all read by the model and steer its choices just as strongly as the system prompt.
+7. **Harness tricks are workarounds for current model limits, and they go stale.** Every guardrail assumes something today's model cannot do reliably on its own. Re-test assumptions whenever the model upgrades and delete scaffolding that no longer helps.
+8. **Measure and read real runs.** Small edits cause surprising drops, and claimed harness gains often sit inside normal run-to-run noise. Read raw failure logs before designing tests, run repeated trials, and report cost alongside accuracy.
 
-The second is that context is the scarce resource. Every source on tools, harnesses, context and memory comes back to three facts: the model sees only its context, the context is limited, and filling it with irrelevant material makes performance worse. Many techniques that look unrelated, such as consolidated tools, skills that load on demand, code execution, compaction, subagents and just-in-time retrieval, are all ways of keeping the context small and relevant.
+## Where the literature still differs
 
-The third is that lasting state belongs outside the model. Because the model forgets everything between calls and every session starts fresh, agents keep their progress, plans and knowledge in files, logs and version control, and bring back only what they need. The long-running agents on page 6, Manus's to-do list, Claude Code's memory files and Anthropic's session log are all versions of this one idea.
+Most disagreements are about scope or task mix rather than the basic picture:
 
-The fourth is to start simple and add complexity only when it is shown to help. Anthropic's advice on choosing between workflows and agents, the minimal SWE-bench agent, the simple loops found inside production harnesses, the success of plain files over specialized memory systems, and the mixed record of multi-agent systems all point the same way. Each extra component should earn its place through measurement.
-
-The fifth is that checking should be separate from doing. Models tend to judge their own work too kindly, so the sources repeatedly separate the agent that produces work from whatever checks it. Böckeler's sensors, Anthropic's evaluator agent, Cognition's reviewer with a clean context and the graders of an eval are all examples. Verification is also the main limit on self-improvement.
-
-The sixth is that the interface between the model and the world deserves real design work. Tool names, descriptions, parameters, outputs and error messages are all read by the model and shape its behaviour as much as the system prompt does. SWE-agent's agent-computer interface, Anthropic's guidance on writing tools and the attention given to tool descriptions all make this point.
-
-The seventh is that harness components are workarounds for model weaknesses, and they go out of date. Each piece of scaffolding assumes the model cannot do something on its own, and as models improve, some of those assumptions stop being true. Good harnesses are re-tested with each new model and simplified when they can be.
-
-The eighth is that intuition is not enough, so you have to measure and read transcripts. The system prompt line that passed early tests but cost performance, the finding that differences between harnesses are often no larger than the noise between repeated runs, and the advice to begin evaluation by reading real runs all say the same thing. The only reliable way to know whether a change helps is to test it and to look closely at what the agent actually did.
-
-The sources do disagree in a few places, and these are worth remembering. They define "harness" at different scales, from the whole system down to only the loop. They define "memory" narrowly or broadly. They differ on how much multi-agent systems help, although they agree on the kind of task where they help. And early findings about where information sits in the context have not held up equally for every model. Where sources disagree, the disagreement is usually about scope or about which tasks were tested, not about the basic picture.
-
-## Key vocabulary
-
-- **Scaffolding**: another word for the parts of a harness built around the model, especially the parts that make up for a weakness of the model.
-- **Verification**: checking whether the agent's work is actually correct, done separately from the work itself.
+- **What "harness" covers:** everything outside the model vs. just the loop itself.
+- **What "memory" covers:** saved cross-session experience only vs. weights, context, and external files together.
+- **When multi-agent pays off:** big gains on parallel read-heavy tasks vs. drops on closely connected step-by-step tasks.
+- **Position in context:** how strongly "lost in the middle" shows up depends on the model and task.
 
 Next: [13. Glossary](13-glossary.md)

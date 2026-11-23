@@ -1,49 +1,43 @@
 ---
-title: "2. The model"
+title: "2. LLMs"
 nav_order: 3
 ---
 
-# 2. The model
+# 2. LLMs
 
-## What a language model does
+## Next-token prediction
 
-A large language model (LLM) is a neural network trained on a very large amount of text to do one thing: given some text, predict what comes next. It works on tokens rather than whole words. A token is a short piece of text, often a whole common word or part of a longer one, and in English a token averages roughly three to four characters. When the model writes a reply, it predicts one token, adds it to the end of the text, and then predicts the next token from the longer text. It repeats this until it produces a token that means stop. Everything a model writes, whether an essay, a block of code or a request to run a tool, is produced this way.
+An LLM predicts one **token** at a time (a short piece of text, roughly 3 to 4 English characters), appends it to the text so far, and predicts the next token until it outputs a stop token. Plain prose, code, and structured requests to run a tool are all generated in this exact same way.
 
-## Weights and training
+## Training stages that matter for agents
 
-The model's behaviour is set by its weights, which are the billions of numbers inside the network that were adjusted during training. Training happens in stages. In pretraining, the model learns to predict the next token across a huge collection of text, and this is where it picks up language, facts and general patterns of reasoning. In post-training, it is trained further to follow instructions, hold a conversation and behave helpfully. One common method is reinforcement learning from human feedback (RLHF), in which the model is rewarded for responses that people prefer. Another is reinforcement learning from verifiable rewards (RLVR), in which the model is rewarded for answers that can be checked as correct, such as code that passes its tests or a math problem solved correctly. Andrej Karpathy's review of 2025 describes RLVR as the major development of that year, and it is a large part of why recent models reason step by step and handle long tasks well.
+- **Pretraining:** next-token prediction over huge text datasets; this gives the model language, facts, and general reasoning patterns.
+- **Post-training:** teaches the model to follow instructions and hold a conversation using **RLHF** (reinforcement learning from human feedback, rewarding replies people prefer) and **RLVR** (reinforcement learning from verifiable rewards, rewarding answers that can be automatically checked, such as code passing tests or exact math answers). RLVR drove much of the recent jump in step-by-step reasoning and long tasks ([Karpathy](https://karpathy.bearblog.dev/year-in-review-2025/)).
+- **Tool-use training:** supervised fine-tuning on recorded tool-use examples followed by RL inside simulated environments where the model must call tools to finish tasks ([Lambert](https://rlhfbook.com/teach/course/lec11-chap13-tools/)). Because a model is often trained inside one specific harness, it can perform noticeably better in that harness than in an unfamiliar one. 
+	- **IMPORTANT Consequence:** an agent benchmark score measures the model and its harness together, not the model alone.
 
-Modern models are also trained specifically to use tools. Nathan Lambert's lecture on tool use explains that models are first trained on recorded examples of tool use and then trained with reinforcement learning in simulated environments, where they must call tools to finish tasks. Because a model is often trained inside a particular harness, it can perform better in that harness than in an unfamiliar one. This is one reason why a benchmark score describes a model and its harness together rather than the model alone.
+Once training finishes, the model's weights do not change while you use it. Anything the model appears to "learn" during a session lives only in its input text, never in its weights.
 
-Once training is finished, the weights do not change while the model is in use. Anything the model appears to learn during a conversation is not stored in its weights.
+## LLMs are stateless: 
+> Stateless: the model keeps nothing from one call to the next. Every call starts fresh, so the model has only its training and the text sent in that call to work with.
 
-## One call to the model
+Using an LLM means sending it input text and getting output text back (one **call**). When you send a 10-message conversation plus one new message, the model reads all 11 messages from scratch, writes a reply, and forgets everything again. If an agent read a file ten steps ago and that file is no longer in the input, the model has no idea what it said.
 
-Using a model means sending it input text and receiving output text. One such exchange is called a call, or an inference call. The most important fact about a call, and the one that explains most of the rest of this primer, is that the model keeps nothing between calls. In other words, it is stateless. If you send it a conversation, it reads the whole conversation from the beginning, writes its reply, and then retains nothing. When you next send it the same conversation plus one new message, it reads all of it again from scratch.
+Context management ([page 3](03-context.md)), harnesses ([page 6](06-the-harness.md)), and memory ([page 8](08-memory.md)) all exist to work around this single limit.
 
-This means that whatever the model knows during a task must be present in the input of each call. If an agent read a file ten steps ago and that file's contents are no longer in the input, the model has no way of knowing what the file said. The context (page 3), the harness (page 6) and memory (page 8) all exist because of this one property.
+## Strengths and Weaknesses 
 
-## What the model can and cannot do
+LLMs are strong at summarizing, writing and fixing code, reasoning over provided data, and choosing which tool to use next. Each of their hard limits maps directly to a job the harness does instead:
 
-A model is good at reading and writing text, and that covers a lot: explaining, summarizing, writing and fixing code, reasoning through a problem, and deciding which tool would help next. What it cannot do is just as important. It cannot execute anything, so when an agent "runs a command", the model has only written text asking for the command to be run. It cannot see anything that is not in its input. It does not remember earlier calls. And it knows nothing about events after its training data was collected, a date called its knowledge cutoff, unless that information is placed in its input. Each of these limits is handled by some part of the harness, which runs commands on the model's behalf, gathers the information it needs, keeps records between calls and supplies up-to-date facts.
+| What the model cannot do                                              | How the harness handles it                                                 |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Run code or take actions                                              | Runs tools and commands on the model's behalf                              |
+| See anything outside its input text                                   | Gathers and loads relevant information before each call                    |
+| Remember earlier calls                                                | Keeps the conversation history and saves long-term notes outside the model |
+| Know events after its **knowledge cutoff** (when training data ended) | Supplies up-to-date facts via search, files, or external tools             |
 
-## Thinking
-
-Many current models can write out a stretch of reasoning before they give their answer, a feature usually called extended thinking or reasoning. This reasoning is also just generated text, but the model has been trained to use it to work through a problem before committing to a reply. Spending more tokens on thinking generally improves results on hard problems, which is why harnesses often let you set an effort level that controls how much the model thinks.
-
-## Key vocabulary
-
-- **Large language model (LLM)**: a neural network trained on large amounts of text to predict the next token.
-- **Token**: the unit of text a model reads and writes, roughly three to four characters of English.
-- **Weights**: the learned numbers inside the model, fixed once training ends.
-- **Pretraining**: the first stage of training, in which the model learns to predict the next token across a huge collection of text.
-- **Post-training**: later training that teaches the model to follow instructions, hold a conversation and use tools.
-- **RLHF**: reinforcement learning from human feedback, which rewards responses that people prefer.
-- **RLVR**: reinforcement learning from verifiable rewards, which rewards answers that can be checked as correct.
-- **Inference call**: one exchange in which input text is sent to the model and output text comes back.
-- **Stateless**: keeping nothing between calls, which is true of the model itself.
-- **Knowledge cutoff**: the date after which the model's training data contains nothing.
-- **Extended thinking**: reasoning text the model writes before its answer, which improves results on hard problems.
+## Extended thinking
+Many current models write out a stretch of step-by-step reasoning (**extended thinking**) before giving their final answer. This is still ordinary generated text, trained via RL to act as scratch paper before the model commits to an answer or tool call. Allowing more thinking tokens (often controlled by an **effort level** setting) gives the model more compute at test time and usually improves accuracy on hard problems.
 
 ## Sources
 

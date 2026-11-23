@@ -9,7 +9,6 @@ Compiled 2026-11-19. Every link was opened and checked.
 
 ## Weekend core (in order)
 - Lilian Weng, [LLM Powered Autonomous Agents](https://lilianweng.github.io/posts/2023-06-23-agent/) (2023). The classic split into planning, memory and tool use.
-- Sumers et al., [CoALA: Cognitive Architectures for Language Agents](https://arxiv.org/abs/2309.02427) (TMLR 2024, peer-reviewed). Most precise vocabulary: an agent is an LLM plus memory modules (working, episodic, semantic, procedural), an action space, and a decision procedure. Read sections 1 to 4.
 - Barbaste et al., [Harness Engineering: Anatomy, Architecture, and Evolution of Coding Agents](https://arxiv.org/abs/2609.00006) (Jul 2026, preprint). Defines a harness (loop, tools, context management, safety, orchestration, extensions) and maps it across 11 production harnesses from their source code.
 - Drew Breunig, [The State of Context Engineering](https://www.dbreunig.com/2026/10/24/the-state-of-context-engineering.html) (Oct 2026). Four ways context fails and the fixes. Pair with Chroma, [Context Rot](https://www.trychroma.com/research/context-rot): 18 models, task held fixed, only input length varied.
 - Hu et al., [Memory in the Age of AI Agents](https://arxiv.org/abs/2512.13564) (Dec 2025, preprint). Separates memory from RAG and context; classifies it by form, function and how it changes.

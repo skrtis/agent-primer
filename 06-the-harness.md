@@ -7,65 +7,113 @@ nav_order: 7
 
 ## What the harness is
 
-The harness is all the software around the model that turns it into an agent. Vivek Trivedy's post "The Anatomy of an Agent Harness" puts it most simply: if you're not the model, you're the harness. The source-code study by Barbaste and colleagues, which examined eleven production coding agents including Claude Code, Codex CLI and Gemini CLI, describes the harness as the runtime that connects a model to its environment. It lists the harness's jobs as running the loop, exposing tools, managing context, enforcing safety controls, coordinating work and providing ways to extend it.
+The **harness** is all the software wrapped around a language model to turn it into an agent: "if you're not the model, you're the harness" ([Trivedy](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness)). A source-code study of 11 production coding agents (including Claude Code, Codex CLI, and Gemini CLI) groups its jobs into six areas: running the loop, providing tools, managing context, enforcing safety checks, coordinating work, and supporting extensions like MCP servers, skills, and hooks ([Barbaste et al.](https://arxiv.org/abs/2609.00006)).
 
-The word is used at two scales, and it helps to know both. In the broad sense used above, the harness is everything except the model. Anthropic's "Scaling Managed Agents" uses it in a narrower sense, for just the loop that calls the model and routes its tool calls, and gives separate names to the other parts (described below). Birgitta Böckeler's article on Martin Fowler's site adds a further distinction. The inner harness is the part the agent's makers build and ship, such as the system prompt, the built-in tools and the loop. The outer harness is the part you add for your own project, such as instruction files, skills, hooks and checks. When a source says "harness", it is worth checking which of these it means.
+People use "harness" at three different scales:
 
-## What the harness does
+| Usage | What it covers | Source |
+|---|---|---|
+| **Broad harness** | Everything outside the model itself | [Trivedy](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness); [Barbaste et al.](https://arxiv.org/abs/2609.00006) |
+| **Narrow harness** | Just the loop that reads history, builds context, calls the model, and runs tool requests | [Anthropic Managed Agents](https://www.anthropic.com/research/managed-agents) |
+| **Inner vs. outer harness** | **Inner:** what the agent's makers ship (loop, system prompt, built-in tools). **Outer:** what you add for your own project (`CLAUDE.md`, skills, hooks, checks) | [Böckeler](https://martinfowler.com/articles/harness-engineering.html) |
 
-Each of the harness's jobs exists to make up for one of the model's limits from page 2. The model cannot act, so the harness runs tools on its behalf. The model sees only its context, so the harness assembles that context on every call from the system prompt, the tool definitions, any project instructions and the conversation so far. The model remembers nothing between calls, so the harness keeps the record of what has happened and stores anything that must outlast the session in files, logs or version control. The model can make mistakes with real consequences, so the harness enforces permissions, for example by asking the user before running a command that deletes files. It also runs code in a sandbox, which is an isolated environment where mistakes cannot damage the rest of the system. The context window is limited, so the harness shortens long tool outputs and summarizes old parts of the conversation when the window fills. Finally, for larger tasks the harness can coordinate several model calls or several agents, and it offers extension points such as MCP servers, skills and hooks.
+## The agent loop in full
 
-## The agent loop in detail
+Expanding the loop from [page 1](01-what-an-agent-is.md) to what real harnesses do:
 
-With those jobs in mind, the loop from page 1 can be described more completely.
+1. Build the context: system prompt, tool definitions, project instructions (e.g., `CLAUDE.md`), conversation history, and user task.
+2. Call the model.
+3. If the reply asks for no tools, show it to the user and stop.
+4. For each requested tool, check **permissions** (asking the user or blocking risky actions like deleting files) and run it inside a **sandbox** (an isolated environment where mistakes cannot harm the rest of the system) where appropriate.
+5. Capture the output or error, trim or save huge outputs to a file, and add the result to the conversation.
+6. Check context size (trimming or summarizing older turns if near the limit) and log what happened.
+7. Go back to step 1.
 
-1. The harness assembles the context: the system prompt, the tool definitions, project instructions such as CLAUDE.md, the conversation so far and the user's task.
-2. It sends this to the model in one call.
-3. The model returns either a final answer, or one or more tool calls.
-4. If there is no tool call, the loop ends and the answer goes to the user.
-5. Otherwise the harness checks each tool call against its permissions and runs it, in the sandbox where appropriate.
-6. It captures the result or the error, shortens it or saves it to a file if it is very large, and adds it to the conversation.
-7. It checks the size of the context, compacting or trimming it if needed, and records what happened in the session log.
-8. It returns to step 1.
+Real production loops are surprisingly simple. Anthropic's SWE-bench agent used a short prompt, one tool to run shell commands, and one tool to edit files inside a plain loop ([Anthropic](https://www.anthropic.com/engineering/swe-bench-sonnet)). None of the 11 production harnesses studied by Barbaste et al. were built on a general-purpose agent framework; all used plain hand-written code for their loops.
 
-Anthropic's description of its SWE-bench agent shows how little is needed for this to work. That agent had a short prompt, one tool for running shell commands and one for editing files, and it simply kept calling the model and returning tool results until the model said it was finished or the context window filled up. The study of eleven production harnesses found the same simplicity at their core. Their loops were plain hand-written code, and none of the systems was built on a general-purpose agent framework.
+## Separating session, harness, and sandbox
 
-## Session, harness and sandbox
+Anthropic's [Managed Agents design](https://www.anthropic.com/research/managed-agents) splits a running agent into three independent pieces so any one can crash or be replaced without losing the others:
 
-Anthropic's "Scaling Managed Agents" splits a running agent into three parts, each of which can fail or be replaced without losing the others. The session is a permanent, append-only log of everything that has happened, stored outside the model's context. The harness, in the narrow sense, is the loop that reads the session, builds the context, calls the model and routes tool calls. The sandbox is where code actually runs and files are edited. Keeping these apart means that a crashed sandbox does not lose the session, that a summarized context can be rebuilt from the full log, and that credentials can be kept outside the sandbox, where code written by the model cannot reach them.
+- **Session:** a permanent record of every event (only adding new entries to the end), stored outside the model's context.
+- **Harness (narrow):** the loop that reads the session, builds the context, calls the model, and routes tool requests.
+- **Sandbox:** the isolated space where code actually runs and files are edited.
 
-## Long-running agents (relevant)
+Separating these means a crashed sandbox does not wipe out the session history, a summarized context can be rebuilt from the full log, and passwords or API keys stay outside the sandbox where model-written code cannot reach them.
 
-A single context window is not enough for a task that takes many hours or several days, and each new session starts with no knowledge of the previous ones. Anthropic's "Effective harnesses for long-running agents" describes one solution. An initializer agent runs once at the start and sets up the project. It writes a script for starting the application, a progress file, and a list of every feature with each one marked as failing, and it makes a first commit in version control. In every later session, a coding agent reads the progress file and the version history to learn where things stand, works on one feature, tests it, marks it as passing, commits, and updates the progress notes for the next session. The feature list exists so that the agent cannot declare the project finished early, and working on one feature at a time keeps each session's changes small and easy to check.
+## Long-running agents
 
-A related post, "Harness design for long-running application development", adds a second idea, which is to separate the agent that builds from the agent that judges. Models tend to rate their own work too highly, so the harness used one agent to write a plan, a second to build the application, and a third to test the running application and grade it against agreed criteria. The same post compares two ways of handling a full context. Compaction summarizes the conversation in place and continues, while a reset starts a fresh agent that picks up from a structured handoff note. Resets helped one model that tended to rush to finish as its context filled, and they became unnecessary with a later model.
+Tasks lasting hours or days outgrow a single context window. Two patterns from Anthropic's long-running agent studies address this:
 
-## Guides and sensors
+- **Initializer + step-by-step worker sessions** ([Anthropic](https://www.anthropic.com/research/effective-harnesses-for-long-running-agents)): a one-time **initializer agent** sets up a startup script, a progress file, a checklist of every feature (all marked failing), and an initial version-control commit. Each later session reads the progress file and commit history, builds one feature, tests it, marks it passing, commits, and updates the progress file. The feature list stops the agent from quitting early, and working one feature at a time keeps changes small and easy to check.
+- **Separate builder and evaluator + resets vs. compaction** ([Anthropic](https://www.anthropic.com/research/harness-design-long-running-apps)): models tend to grade their own work too generously, so splitting planning, building, and testing across separate agents catches mistakes self-review misses. When context fills, **compaction** summarizes the conversation in place, while a **reset** starts a fresh agent with an empty context and a structured handoff note. Resets helped a model that rushed near context limits, then became unnecessary on the next model generation.
 
-Böckeler's article is the most useful guide to the outer harness, the part you build yourself. She sorts its pieces into guides and sensors. Guides act before the agent does anything and steer it in the right direction; instruction files such as CLAUDE.md, written conventions and skills are all guides. Sensors act after the agent has done something and check the result, so that the agent can correct itself; tests, linters, type checkers and review by another model are all sensors. A harness with only guides never checks whether its rules were followed, and a harness with only sensors lets the agent repeat the same mistake every time, so both are needed. **She also distinguishes computational checks, such as tests, which are deterministic, fast and cheap, from inferential checks, such as review by a model, which can judge meaning but are slower, costlier and less reliable.**
+## Guides and sensors (the outer harness)
 
-## Harness pieces go stale when models become better
+For the project-specific outer harness you build yourself, [Böckeler](https://martinfowler.com/articles/harness-engineering.html) divides pieces by when they act:
 
-A principle that appears in several sources is that each part of a harness encodes an assumption about something the model cannot do on its own. The context resets above assumed a model that rushed near the end of its context, and they were dropped when a newer model no longer did. Cursor's post on improving its harness describes removing early guardrails, such as forcing a lint check after every edit, once models stopped needing them. The practical rule is to re-test these assumptions whenever the model changes and to remove what is no longer doing useful work, because every extra component costs tokens, time and complexity. 
+- **Guides** act *before* the agent moves, steering it (`CLAUDE.md`, written conventions, skills).
+- **Sensors** act *after* the agent acts, checking the result so it can fix mistakes (tests, linters, type checkers, review by another model).
 
-## How much the harness matters
+Guides without sensors go unchecked; sensors without guides let the agent repeat the same mistake every run. Among sensors, prefer **computational checks** (unit tests, linters, type checkers: exact, fast, cheap) over **inferential checks** (review by another model: can judge meaning, but slower, costlier, and less consistent).
 
-The evidence here is mixed, and it is worth keeping both sides in mind. LangChain improved its coding agent from 52.8 to 66.5 percent on the Terminal Bench 2.0 benchmark by changing only the harness, mainly the system prompt, the tools and the checks that run around the model's calls. On the other hand, Anthropic's SWE-bench agent scored 22, 33 and 49 percent with three successive models in an identical harness, so the model drove most of that gain. And a 2026 study by Liu and Han, which ran seven models in three different harnesses and repeated each run, found that no harness was best for every model, and that swapping harnesses usually changed results by about as much as simply running the same setup again. The reasonable conclusion is that the harness does matter, but its value depends on the particular model, and any claim that one harness is better should be tested against repeated runs.
+## Harnesses go stale as models improve
 
-## Key vocabulary
+Every harness trick assumes there is something today's model cannot do on its own (such as resets for context-rushing, or Cursor's early rule forcing a lint check after every edit). When newer models stop needing a guardrail, keeping it wastes tokens, time, and complexity. Re-test your harness assumptions whenever the model upgrades and delete what is no longer helping ([Cursor](https://cursor.com/blog/continually-improving-agent-harness)).
 
-- **Harness**: all the software around the model that turns it into an agent. In narrower usage, only the loop that calls the model and routes its tool calls.
-- **Inner harness**: the part the agent's makers build and ship, such as the system prompt, the built-in tools and the loop.
-- **Outer harness**: the part you add for your own project, such as instruction files, skills, hooks and checks.
-- **Permissions**: the harness's rules about which actions need the user's approval and which are not allowed.
-- **Sandbox**: an isolated environment where an agent's code runs without being able to damage anything else.
-- **Session**: in Anthropic's Managed Agents, the permanent, append-only log of everything that happened in a run.
-- **Initializer agent**: an agent that runs once at the start of a long project to set up the progress file, the feature list and the repository.
-- **Compaction**: summarizing a long conversation and continuing with the summary in place of the full history.
-- **Reset**: starting a fresh agent with an empty context, which picks up from a structured handoff note.
-- **Guides**: parts of the harness that steer the agent before it acts, such as CLAUDE.md, written conventions and skills.
-- **Sensors**: parts of the harness that check the agent's work after it acts, such as tests, linters and review by another model.
-- **Computational and inferential checks**: checks run by ordinary code, which are deterministic, fast and cheap, versus checks done by a model, which can judge meaning but are slower and less reliable.
+## How much does the harness actually matter?
+
+The evidence cuts both ways:
+
+- **Big harness gain:** LangChain raised its coding agent from **52.8% to 66.5%** on Terminal Bench 2.0 by changing only the harness (system prompt, tools, and surrounding checks) ([Trivedy](https://www.vtrivedy.com/posts/improving-deep-agents-with-harness-engineering)).
+- **Big model gain:** Anthropic's SWE-bench agent jumped **22% → 33% → 49%** across three successive models inside the exact same harness ([Anthropic](https://www.anthropic.com/engineering/swe-bench-sonnet)).
+- **High run-to-run noise:** testing 7 models across 3 harnesses with repeated runs found no single best harness across all models, and swapping harnesses often changed scores by about as much as simply rerunning the same setup ([Liu & Han](https://arxiv.org/abs/2610.04433)).
+
+Bottom line: the harness matters, its benefit depends on the model, and any claimed harness improvement should be tested against repeated runs.
+
+## The Claude Agent SDK
+
+The **Claude Agent SDK** is Claude Code packaged as a library for Python (`claude-agent-sdk`) and TypeScript. It gives your own code the same agent loop, built-in tools, and context management that run Claude Code ([Agent SDK docs](https://code.claude.com/docs/en/agent-sdk/overview)). It sits between two other ways of using Claude:
+
+- **Messages API:** one request, one response. You write the loop from [page 1](01-what-an-agent-is.md) yourself and define every tool, which gives you exact control over what each request contains.
+- **Claude Code:** the finished coding agent, used interactively.
+
+With the SDK you start the loop with `query()` and choose which parts of the harness are switched on:
+
+- **System prompt:** your own text replaces the whole prompt; a preset keeps Claude Code's prompt and adds yours.
+- **Built-in tools:** `tools` sets which ones are available (reading and editing files, shell commands, search, web).
+- **Custom tools:** Python functions exposed through an MCP server inside your script ([page 5](05-tools.md)). The model sees them as `mcp__<server>__<tool>`, and external MCP servers attach the same way.
+- **Settings from disk:** `setting_sources=[]` loads no `CLAUDE.md` or local settings files, which keeps experiments controlled.
+- **Subagents, skills, hooks, and permissions:** the same features Claude Code has ([page 9](09-multi-agent-systems.md)).
+- **Long runs:** automatic compaction, turn and spending limits (`max_turns`, `max_budget_usd`), and resumable sessions saved as log files (`JSONL`).
+
+A minimal agent with one custom tool:
+
+```python
+import asyncio
+from claude_agent_sdk import query, ClaudeAgentOptions, tool, create_sdk_mcp_server
+
+@tool("lookup", "Look up a compound by ID", {"id": str})
+async def lookup(args):
+    return {"content": [{"type": "text", "text": compounds[args["id"]]}]}
+
+options = ClaudeAgentOptions(
+    system_prompt="You are a medicinal chemist.",
+    setting_sources=[],                  # load nothing from disk
+    tools=["Read", "Grep"],              # the only built-in tools available
+    mcp_servers={"db": create_sdk_mcp_server("db", tools=[lookup])},
+    allowed_tools=["mcp__db__lookup"],   # run this tool without asking
+    max_turns=10,
+)
+
+async def main():
+    async for message in query(prompt="...", options=options):
+        print(message)                   # save every message to keep a full trace
+
+asyncio.run(main())
+```
+
+The SDK also adds things you did not write yourself. Environment details (working directory, operating system) and any loaded `CLAUDE.md` arrive in the conversation rather than the system prompt, automatic compaction changes what the model sees partway through a run, and only a summary of the model's reasoning is returned ([Agent SDK docs](https://code.claude.com/docs/en/agent-sdk/overview)).
 
 ## Sources
 
@@ -79,5 +127,8 @@ The evidence here is mixed, and it is worth keeping both sides in mind. LangChai
 - Cursor, [Continually improving our agent harness](https://cursor.com/blog/continually-improving-agent-harness) (Apr 2026)
 - Vivek Trivedy, [Improving Deep Agents with Harness Engineering](https://www.vtrivedy.com/posts/improving-deep-agents-with-harness-engineering) (Feb 2026)
 - Liu and Han, [What Does a Harness Buy? Tokens, Mostly](https://arxiv.org/abs/2610.04433) (Oct 2026)
+- Anthropic, [Agent SDK overview](https://code.claude.com/docs/en/agent-sdk/overview) (read Nov 2026)
+- Anthropic, [Agent SDK reference: Python](https://code.claude.com/docs/en/agent-sdk/python) (read Nov 2026)
+- Anthropic, [Connect to external tools with MCP](https://code.claude.com/docs/en/agent-sdk/mcp) (read Nov 2026)
 
 Next: [7. Context engineering](07-context-engineering.md)

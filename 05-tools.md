@@ -5,62 +5,55 @@ nav_order: 6
 
 # 5. Tools
 
-## What a tool is
+## How tools work
 
-A tool is a function that lives outside the model and that the model can ask to have run. Running a shell command, reading or editing a file, searching the web, querying a database and calling a company's API are all typical tools. The essential point, which every source on tool use makes, is that the model never runs a tool itself. As page 2 explained, a model can only produce text. What it produces is a structured request that says which tool it wants and with which inputs. The harness reads that request, runs the real function and sends the result back.
+A **tool** is an external action (running a command, reading or editing a file, searching the web, querying a database) that the harness runs when the model asks for it. The model never runs tools itself. It only writes a structured text request, and the harness runs the actual code and sends the output back.
 
-## How a tool is described to the model
+On every call, the harness sends a **tool definition** for each available tool containing three parts:
 
-For the model to use a tool, it has to know that the tool exists and what it does. The harness provides this through a tool definition, which has three parts. The first is a name. The second is a description, written in plain language, that explains what the tool does and when to use it. The third is a schema that lists the tool's parameters and their types, usually written in a format called JSON Schema. For example, a file-reading tool might be named read_file, be described as returning the contents of the file at a given path, and have one required parameter called path, which must be a string.
+1. **Name** (e.g., `read_file`)
+2. **Description** (plain text explaining what the tool does and when to use it)
+3. **Input format** (usually written in **JSON Schema**, listing each input's name, type, and whether it is required)
 
-Tool definitions are sent with every call as part of the context. The model decides whether and when to use a tool based on its name and description, so the description is really a piece of prompt text and deserves the same care as the system prompt. Anthropic has written that, while building its SWE-bench agent, it spent more time refining the tools than the overall prompt.
+One tool exchange (often called **function calling**) looks like this:
 
-## One tool call, step by step
+```json
+// 1. Model outputs a structured tool request and stops writing
+{ "tool": "read_file", "arguments": { "path": "src/train.py" } }
 
-The exchange between the model and the harness during a tool call always follows the same steps.
+// 2. Harness checks permissions, runs the tool, trims huge outputs,
+//    and sends the result back to the model in the next call
+{ "tool_result": "def train(cfg):\n    ..." }
+```
 
-1. The harness sends a call containing the system prompt, the tool definitions and the conversation so far.
-2. The model decides that a tool would help and, instead of a final answer, writes a tool call: the tool's name and the inputs, formatted to match the schema. It then stops writing.
-3. The harness reads the tool call, checks that it is valid and allowed (it may ask the user for permission first), and runs the actual function.
-4. The harness takes the output, shortens it if it is very long, and adds it to the conversation as a tool result.
-5. The harness calls the model again with the longer conversation, and the model either requests another tool or gives its final answer.
+Because tool names and descriptions sit inside the context and guide which tool the model picks, they are effectively prompt text. For its SWE-bench coding agent, Anthropic spent more time refining tool descriptions than the system prompt itself ([Anthropic](https://www.anthropic.com/research/building-effective-agents)).
 
-The term function calling is often used for this mechanism, and especially for step 2, because the model is in effect writing a call to a function, with arguments that must match the function's declared parameters.
+## Designing effective tools
 
-## What makes a good tool
+The SWE-agent paper framed this as the **agent-computer interface (ACI)**: an LLM is a new kind of computer user, and changing only its tool interface changes performance on the exact same model ([Yang et al.](https://arxiv.org/abs/2405.15793)). Practical rules ([Anthropic](https://www.anthropic.com/research/writing-tools-for-agents)):
 
-Anthropic's post "Writing effective tools for agents" collects the practical rules, and the other sources agree with them. It is better to have a few tools that each do a complete, meaningful job than many small tools that mirror every endpoint of an API. Every definition costs context, and overlapping tools leave the model unsure which one to choose. A good test is whether a person reading the tool list could say which tool fits a given task, because if a person cannot, neither can the model. Names should be clear and grouped by the service they belong to, descriptions should be written as if for a new colleague, and parameter names should be unambiguous (user_id rather than user). Tools should return information the model can use directly, such as names rather than opaque internal ID numbers, and they should limit how much they return, through options such as pagination or truncation. Error messages should explain what went wrong and how to fix the request, because the model will read them and try again.
+- **Use fewer, more complete tools:** prefer a small set of tools that each do a complete, meaningful job instead of dozens of tiny tools mirroring every function of a service. Extra definitions waste context and confuse the model. Good test: if a person cannot quickly tell which tool to pick, neither can the model.
+- **Make names and inputs crystal clear:** group names by service, write descriptions as if for a new colleague, and use specific input names (`user_id`, not `user`).
+- **Return clean, bounded outputs:** return readable names rather than cryptic internal ID numbers, and cap output size (via pagination or truncation) so one call cannot flood the context window.
+- **Write helpful error messages:** the model reads errors and tries again, so explain what went wrong and how to fix the request.
 
-An older line of research makes the same point in general terms. The SWE-agent paper (Yang and colleagues, 2024) argued that a language model is a new kind of computer user and needs its own interface, which the authors called the agent-computer interface. They showed that changing only that interface changed how well the same model performed on software tasks.
+## MCP (Model Context Protocol)
 
-## MCP
+Without a common standard, every agent app has to write custom connector code for every external service (calendars, GitHub, databases). **MCP** is an open standard that avoids that duplicate work:
 
-Every application that wants to give a model access to a service, such as a calendar, a code host or a database, needs tool definitions for that service and code that runs them. Without a standard, each application would have to write its own integration for each service. The Model Context Protocol (MCP) is an open standard that solves this. A service is wrapped once as an MCP server, which offers tools the model can call, along with resources (data the model can read) and prompts (reusable templates). An application such as Claude Code acts as the host, and for each server it connects to, it runs a client that talks to that server. Any application that supports MCP can then use any MCP server. The protocol's July 2026 revision made it stateless, meaning that each request is self-contained like an ordinary web request, which makes servers easier to run at large scale.
+- **MCP server:** wraps a service once, exposing **tools** (actions), **resources** (readable data), and **prompts** (reusable templates).
+- **MCP host and client:** the agent app (such as Claude Code) is the host, running one client connection for each server it talks to.
 
-MCP has a cost. Every tool from every connected server adds its definition to the context, and a single large server can take up tens of thousands of tokens before the agent has done anything.
+Any MCP-compatible app can connect to any MCP server. The [July 2026 spec revision](https://blog.modelcontextprotocol.io/posts/2026-07-28/) made MCP requests self-contained (like normal web requests, with no saved session state on the server), making servers easier to run at scale.
+
+**The tradeoff is context cost.** Every tool from every connected server adds its definition to the context on every turn; one large server can use tens of thousands of tokens before the agent even starts working.
 
 ## Code execution and skills
 
-Two newer ideas reduce that cost and change how tools are used.
+Two newer approaches avoid crowding the context with tool definitions and huge intermediate outputs:
 
-The first idea is to let the model write code instead of making tool calls one at a time. With an ordinary tool call, every result passes back through the model's context, even when the model needs only a small part of it. If the model can instead write a short program that calls several tools, filters their output and prints only what matters, the intermediate data never enters the context. Anthropic's "Code execution with MCP" describes a task whose token use fell from about 150,000 to about 2,000 in this way. The earlier CodeAct paper (Wang and colleagues, 2024) found that agents whose actions were written as Python code succeeded more often than agents that used fixed-format tool calls. Philipp Schmid argues that agents may eventually need only one real tool, a sandbox that runs code, with every other tool available as a function inside it. The cost of this approach is that running code written by a model safely requires a sandbox and careful limits.
-
-The second idea is skills. A skill is a folder containing a file called SKILL.md, which holds instructions for a particular kind of task, together with any scripts or reference documents it needs. At the start of a session the harness loads only each skill's name and one-line description. When a task matches a skill, the model reads the full instructions. This pattern, in which the model sees a short summary first and loads the details only when they are needed, is called progressive disclosure. It appears throughout agent design as a way of keeping the context small, and Simon Willison's post on skills gives the clearest account of it.
-
-## Key vocabulary
-
-- **Tool**: a function outside the model that the model can ask the harness to run.
-- **Tool definition**: a tool's name, plain-language description and parameter schema, sent to the model with every call.
-- **JSON Schema**: a standard format for describing the parameters a tool accepts and their types.
-- **Tool call**: the model's structured request to run a tool, naming the tool and giving its inputs.
-- **Tool result**: the output the harness sends back to the model after running the tool.
-- **Function calling**: the common name for this mechanism, since the model writes a call whose arguments match the tool's declared parameters.
-- **Agent-computer interface (ACI)**: the tools and formats through which an agent works with a computer, designed for a model rather than a person.
-- **MCP (Model Context Protocol)**: an open standard that lets any compatible application use the tools, resources and prompts offered by any compatible server.
-- **MCP host, client and server**: the host is the application (such as Claude Code), the client is the connection it keeps to one server, and the server is the program that offers the tools.
-- **Code execution (code mode)**: letting the model write a program that calls tools inside a sandbox, so that only the program's printed output returns to the context.
-- **Skill**: a folder with a SKILL.md file of instructions, plus any scripts or references, that the model loads only when a task needs it.
-- **Progressive disclosure**: showing the model a short summary first and loading the details only when they are needed.
+- **Code execution (code mode):** instead of calling tools one by one and passing every raw output through the model's context, the model writes a short script inside an isolated sandbox that calls several tools, filters the data, and prints only what matters. In Anthropic's [MCP code-execution study](https://www.anthropic.com/research/code-execution-with-mcp), this cut a task from ~150,000 tokens to ~2,000. Earlier CodeAct experiments likewise found that writing Python code as actions beat fixed-format tool calls ([Wang et al.](https://arxiv.org/abs/2402.01030)). [Schmid](https://www.philschmid.de/code-mode) argues agents may eventually need only one real tool (a sandbox that runs code), with all other tools exposed as functions inside it. The tradeoff is security: running model-written code safely requires tight isolation and limits.
+- **Skills and progressive disclosure:** a **skill** is a folder containing a `SKILL.md` instruction file plus any scripts or reference files it needs. At the start of a session, the harness loads only each skill's name and one-line description; the model reads the full file only when a task matches ([Willison](https://simonwillison.net/2025/Oct/16/claude-skills/)). Showing a short summary upfront and loading details only on demand (**progressive disclosure**) keeps context small.
 
 ## Sources
 

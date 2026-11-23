@@ -54,8 +54,16 @@ def markdown_fixes(text):
     text = re.sub(r"(?m)^(\s*[-*+] )\[[ xX]\] ", r"\1", text)
     lines = text.split("\n")
     out = []
+    in_code = False
     for i, a in enumerate(lines):
         b = lines[i + 1] if i + 1 < len(lines) else ""
+        if a.lstrip().startswith("```"):
+            in_code = not in_code
+            out.append(a)
+            continue
+        if in_code or b.lstrip().startswith("```"):
+            out.append(a)
+            continue
         plain_a = a.strip() and not LIST_OR_BLOCK.match(a)
         if plain_a and b.strip():
             if LIST_OR_BLOCK.match(b):
@@ -83,7 +91,7 @@ def main():
         old.unlink()
     for n, page in enumerate(pages, start=1):
         first = page.read_text().split("\n", 1)[0]
-        title = re.sub(r"^#\s*", "", first)
+        title = re.sub(r"^#\s*", "", first).strip()
         if page.name.startswith("00 "):
             build(page, "index.md", "Start here", n, removed, "permalink: /\n")
         else:

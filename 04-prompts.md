@@ -5,54 +5,55 @@ nav_order: 5
 
 # 4. Prompts
 
-## Prompts and prompt engineering
+## Prompt engineering and in-context learning
 
-A prompt is the text you give a model to steer what it writes. Prompt engineering is the practice of writing prompts that reliably produce the behaviour you want, without changing the model's weights. Lilian Weng's 2023 post on the subject stresses that it is an empirical craft. What works depends heavily on the model, and the only reliable way to know whether a prompt is good is to test it.
+> **Prompt:** the text you give a model to steer its output.
 
-## In-context learning
+> **Prompt engineering:** writing prompts that reliably produce the behavior you want, without changing the model's weights.
 
-One of the most surprising properties of large language models is that they can pick up a new task from their input alone. If you describe a task, or show a few examples of it, the model will usually do the task correctly even though it was never trained on that task specifically and its weights do not change. This is called in-context learning, because the learning happens inside the context of a single call rather than during training.
+What works depends heavily on the specific model, so prompts have to be tested rather than guessed ([Weng](https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/)).
 
-There are two basic ways to use it. A zero-shot prompt describes the task and gives no examples. A few-shot prompt adds a handful of examples, each showing an input and the desired output, so that the model can follow the pattern. Few-shot prompts often work better, but Weng notes that they are sensitive to details. Which examples you choose, how you format them and even the order they appear in can change the results considerably.
+> **In-context learning (ICL):** a model picking up a new task solely from instructions or examples in its input, with its weights unchanged.
 
-In-context learning is not only something you set up on purpose. In an agent it happens throughout the run. When a tool returns an error and the model adjusts its next request, or when the model notices how the code in a repository is written and follows the same style, it is learning from its context. This is also why the contents of the context matter so much, since the model learns from whatever is there, including mistakes and irrelevant material.
+Prompting relies on ICL, in two main forms:
 
-## Chain of thought
+| **Zero-shot** | **Few-shot** |
+|---|---|
+| Describes the task with no examples. | Includes a handful of worked input-output examples. Often more accurate, but sensitive to which examples you pick, how you format them, and what order they appear in ([Weng](https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/)). |
 
-Chain-of-thought prompting asks the model to write out its reasoning step by step before it gives a final answer. For problems that need several steps of reasoning, this improves accuracy, because each step is written down and the model can build on it instead of jumping straight to an answer. Current reasoning models do this on their own through extended thinking (page 2), so you rarely need to ask for it, but the idea explains why thinking helps.
+Inside an agent, this learning continues through the whole run: error messages, the existing code style in a repository, and earlier tool outputs all shape the model's next turn, which is also why mistakes or clutter in context degrade later steps.
+
+> **Chain-of-thought (CoT):** prompting the model to write out its reasoning step by step before answering.
+
+Newer reasoning models already do this automatically through extended thinking ([page 2](02-the-model.md)), so you rarely need to ask for it explicitly.
 
 ## The system prompt
 
-The system prompt is a block of standing instructions that the developer or the harness sends at the start of every call, in the system role. A user message says what to do right now, while the system prompt sets how the model should behave throughout: its role, the rules it must follow, how it should approach tasks, what tone to use, how to use its tools, and facts it needs, such as the current date. In a coding agent, the system prompt typically describes a way of working. It might tell the model to gather information before changing code, to keep changes small, to run the tests after editing, and to make independent tool calls in parallel.
+> **System prompt:** the standing instructions sent in the `system` role at the start of every call.
 
-The system prompt has a large effect on how an agent behaves. In "How System Prompts Define Agent Behavior", Srihari Sriraman and Drew Breunig compared the system prompts of several coding agents and then swapped them between agents. When they ran the same model with Codex's system prompt in place of Claude Code's, it worked in a methodical, plan-first way, while with Claude Code's own prompt it worked in a quicker try-and-fix style. Both versions solved the test tasks, but by different routes. Their summary is that the model sets the ceiling on what an agent can do, and the system prompt largely decides how much of that ability the agent actually uses. They also found that much of a production system prompt exists to correct a model's habits. **One example is reminding the model to call tools in parallel, because its training pushed it toward calling them one at a time.**
+While a user message says what to do right now, the system prompt sets general behavior: role, rules, tone, working habits (such as inspecting files before editing, keeping edits small, running tests afterward, and making independent tool calls at the same time), and facts like today's date.
 
-It is worth being precise about where the system prompt sits. It is one part of the context, not the whole of it, and not every instruction the model receives comes from it. As page 3 mentioned, the CLAUDE.md file in Claude Code is not part of the system prompt; the harness inserts it into the conversation as a separate message.
+The system prompt has a large effect on behavior. Swapping Codex's and Claude Code's system prompts on the exact same model switched it between methodical plan-first work and faster try-and-fix iteration ([Sriraman & Breunig](https://blog.nilenso.com/blog/2026/02/10/how-system-prompts-define-agent-behaviiour/)). Both solved the tasks, via very different paths. The model sets the upper limit on capability; the system prompt determines how much of that ability gets used and corrects training habits (for example, reminding a model trained to call tools one by one to run independent calls in parallel).
 
-## What makes a good system prompt
+Remember that the system prompt is not the only place instructions come from: project files like `CLAUDE.md` are inserted into conversation messages rather than the `system` role.
 
-Anthropic's context engineering post describes the goal as writing at the right altitude. At one extreme, a prompt can try to spell out exact behaviour for every situation, like a long list of if-then rules. Such a prompt is brittle, because it breaks on cases the author did not foresee. At the other extreme, a prompt can be so general that it assumes the model already shares the author's understanding of the task. **A good system prompt sits between the two, specific enough to guide the model and general enough to let it use judgment.**
+## Writing a good system prompt
 
-Anthropic's prompting documentation adds several practical rules. Write clearly and directly, as you would for a capable new colleague who knows nothing about your project. **Explain the reason behind an instruction rather than only stating the instruction, because a model that understands why a rule exists applies it more sensibly. Organize long prompts into sections with headings or XML tags.** **Start with a minimal prompt on a strong model and add instructions only when you see a specific failure, instead of trying to anticipate every problem in advance. And when you use examples, choose a few varied ones that show the intended behaviour, rather than a long list of edge cases.**
+- **Aim for the right altitude** ([Anthropic](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents)): avoid rigid `if/else` rules for every corner case (brittle on unforeseen situations) and avoid vague advice (assumes shared context). Give clear principles and leave room for judgment.
+- **Explain why a rule exists:** telling the model the reason behind an instruction helps it apply the rule sensibly rather than blindly ([Anthropic prompting docs](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)).
+- **Keep it structured and direct:** organize long prompts with headings or XML tags, written as you would brief a capable new colleague.
+- **Add rules only for real failures:** start minimal on a strong model and add instructions only when you observe specific problems. Use a few varied examples rather than long lists of edge cases.
 
-Small changes to a system prompt can have large effects in either direction. OpenAI's GPT-4.1 prompting guide reports that adding three short reminders to an agent's prompt raised its internal SWE-bench Verified score by close to 20 percent. The reminders told the model to keep going until the task was solved, to use its tools rather than guess, and to plan before each action. In the other direction, Anthropic published a postmortem in April 2026 explaining that one line added to Claude Code's system prompt to make it less wordy, which limited the text between tool calls to 25 words, lowered performance by about 3 percent on one of its evaluations, even though earlier tests had shown no problem. Anthropic reverted the line, and it now runs a broad set of evaluations on every system prompt change, for each model, and tests the effect of each line separately. The lesson shared by both examples is that a system prompt should be treated like code, with every change tested before it ships.
+## Treat prompts like code
 
-## From prompt engineering to context engineering
+Small wording changes can cause large swings in either direction:
 
-Drew Breunig points out that the same job has been renamed twice as the field has grown. In 2023 people spoke of prompt engineering, meaning the wording of a single prompt. By 2025 the focus had widened to context engineering, meaning everything placed in the context on every call of an agent's loop. By 2026 it had widened again to harness engineering, meaning the software that assembles that context and runs the loop. Each new name includes the one before it, and the next three pages follow the same widening.
+- **+20% jump:** adding three short reminders to GPT-4.1's prompt (keep going until solved, use tools instead of guessing, plan before acting) raised its internal SWE-bench Verified score by nearly 20% ([OpenAI](https://developers.openai.com/cookbook/examples/gpt4-1_prompting_guide)).
+- **-3% drop from one line:** adding a single line to Claude Code's system prompt capping text between tool calls at 25 words passed early checks but lowered performance by ~3% on one evaluation ([Anthropic](https://www.anthropic.com/research/april-23-postmortem)). Anthropic reverted it and now tests system prompt changes line by line for each model.
 
-## Key vocabulary
+## How the field's name kept widening
 
-- **Prompt**: the text you give a model to steer what it writes.
-- **Prompt engineering**: writing prompts that reliably produce the behaviour you want, without changing the model's weights.
-- **In-context learning**: a model picking up a task from instructions or examples in its input, with no change to its weights.
-- **Zero-shot prompt**: a prompt that describes the task and gives no examples.
-- **Few-shot prompt**: a prompt that includes a handful of worked examples of the task.
-- **Chain of thought**: having the model write out its reasoning step by step before it answers.
-- **System prompt**: standing instructions sent at the start of every call that set how the model should behave throughout.
-- **Right altitude**: Anthropic's phrase for a system prompt that is specific enough to guide the model but general enough to let it use judgment.
-- **Context engineering**: deciding what goes into the context on every call of an agent's loop (page 7).
-- **Harness engineering**: designing the software that assembles the context and runs the loop (page 6).
+The same job has been renamed twice as scope grew ([Breunig](https://www.dbreunig.com/2026/10/24/the-state-of-context-engineering.html)): **prompt engineering** (2023, wording a single prompt) → **context engineering** (2025, deciding everything in the input on every turn) → **harness engineering** (2026, building the full software around the model). Each new term includes the ones before it.
 
 ## Sources
 

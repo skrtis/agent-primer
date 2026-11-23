@@ -7,29 +7,36 @@ nav_order: 12
 
 ## Agents that improve agents
 
-Once an agent can write and test code, an obvious question is whether it can improve itself, or improve the harness it runs in. Lilian Weng's "Harness Engineering for Self-Improvement" describes how the thing being optimized has moved over time, from the wording of prompts, to the contents of the context, to whole workflows, and now to the harness code itself. Several research systems already do this. ACE treats an agent's context as a playbook of strategies that the agent grows and refines from experience. The Darwin Gödel Machine rewrote its own agent code and improved its score on a coding benchmark without any change to the underlying model. Weng's main observation is that these gains appear mostly where success can be checked automatically, such as code with tests, and that adding a self-improvement loop does not guarantee improvement; with weaker models it can make things worse.
+Once an agent can write and test code, people naturally ask whether it can improve itself or its own harness. Over time, the target being optimized has widened: prompt wording → context contents → whole workflows → the harness code itself ([Weng](https://lilianweng.github.io/posts/2026-07-04-harness/)). Early research systems already do this without changing model weights:
 
-## Three kinds of improvement
+- **ACE** treats context as a playbook of strategies that the agent grows and refines from experience ([Zhang et al.](https://arxiv.org/abs/2510.04618)).
+- **Darwin Gödel Machine** rewrote its own agent code to raise coding benchmark scores with the underlying model unchanged ([Weng](https://lilianweng.github.io/posts/2026-07-04-harness/)).
 
-Philipp Schmid's post "Recursive Self-Improvement" offers a helpful way to separate claims that are often run together. The simplest kind is iteration, in which an agent revises its output until it passes a test. The next is self-improvement, in which the system itself changes in a lasting way, for example by saving a new skill, updating its memory or editing its own harness, and then does better on a fixed test. The strongest kind is recursive self-improvement. Here the system improves not only its performance but also its ability to make further improvements, and the standard it is judged by gets harder as well. Most of what is called self-improvement today belongs to the second kind.
+These gains show up mainly where success can be checked automatically (such as code with unit tests). Adding a self-improvement loop does not always help; with weaker models it can make results worse.
 
-## RSI as the labs define it
+## Three levels of improvement
 
-In the safety frameworks of the large AI labs, recursive self-improvement (RSI) has a more specific meaning. Anthropic's "When AI builds itself" defines it as AI fully autonomously designing and developing its own successor. Anthropic's position in that piece is that this has not happened and is not inevitable. AI already writes most of the code at Anthropic and considerably speeds up AI research, but humans still set the goals, and the main gap is the judgment needed to choose which research directions to pursue.
+Public discussion often mixes together three very different ideas ([Schmid](https://www.philschmid.de/recursive-self-improvement)):
 
-An independent assessment by METR, published in November 2026, estimated that capability progress on well-defined tasks at Anthropic was running at roughly twice its earlier rate, and judged that most of this acceleration was due to AI. METR was careful to list the limits of that conclusion. Much of the most informative evidence was withheld from it, it did not have access to unreleased models, and the gains may apply mainly to tasks that can be graded automatically.
+| Level | What changes | Test bar | Where we are today |
+|---|---|---|---|
+| **Iteration** | Output is revised until tests pass | Fixed | Routine |
+| **Self-improvement** | System keeps a lasting change (new skill, updated memory, edited harness) | Fixed | Where most current demos live |
+| **Recursive self-improvement** | Improves both task performance *and* its own ability to make further improvements | Getting harder | Unproven |
 
-## The skeptical view
+## What AI labs mean by RSI
 
-Schmid and others give reasons for caution. Current gains are bounded, because they are measured against tests that humans wrote and still control, and there is little evidence that a system which improves itself also gets better at finding its next improvement. Systems told to raise a score often find ways to raise the score without doing the intended work, a problem called reward hacking; editing the tests instead of fixing the code is a common example. And memory saved for future use often turns out not to help later. The common thread is that self-improvement works only as well as the evaluation behind it, which connects this page back to page 10.
+In frontier lab safety frameworks, **recursive self-improvement (RSI)** has a specific meaning: AI fully autonomously designing and building its own successor ([Anthropic](https://www.anthropic.com/institute/recursive-self-improvement)). Anthropic's view is that this has not happened and is not inevitable; AI already writes most code at Anthropic and speeds up research, but humans still choose goals and supply research judgment.
 
-## Key vocabulary
+An [independent assessment by METR](https://metr.org/blog/2026-11-05-anthropic-ai-rd-acceleration-assessment) estimated that capability progress on well-defined tasks at Anthropic was running at roughly **2×** its earlier pace, mostly due to AI. METR noted clear limits to that estimate: key internal evidence was withheld, it could not test unreleased models, and speedups may concentrate on tasks that can be graded automatically.
 
-- **Iteration**: an agent revising its output until it passes a test.
-- **Self-improvement**: a lasting change to the system itself, such as a new skill, updated memory or an edited harness, that improves its results on a fixed test.
-- **Recursive self-improvement**: improvement that also improves the system's ability to make further improvements, while the standard it is judged by gets harder too.
-- **RSI (lab sense)**: AI fully autonomously designing and developing its own successor.
-- **Reward hacking**: raising a score without doing the intended work, such as editing tests instead of fixing code.
+## Reasons for caution
+
+- **Capped by human-written tests:** current gains optimize against fixed tests that humans wrote, with little evidence that self-modifying systems get better at finding their *next* improvement ([Schmid](https://www.philschmid.de/recursive-self-improvement)).
+- **Reward hacking:** systems told to raise a score often find shortcuts instead of solving the task (for example, editing the unit tests instead of fixing the code).
+- **Saved lessons often fail to transfer:** memory written for future use frequently does not help on new tasks.
+
+In short, automated self-improvement only works as well as the grading behind it ([page 10](10-evals.md)).
 
 ## Sources
 
@@ -39,4 +46,4 @@ Schmid and others give reasons for caution. Current gains are bounded, because t
 - Anthropic, [When AI builds itself](https://www.anthropic.com/institute/recursive-self-improvement) (Sep 2026)
 - METR, [Independent Assessment of AI R&D Acceleration at Anthropic](https://metr.org/blog/2026-11-05-anthropic-ai-rd-acceleration-assessment) (Nov 2026)
 
-Next: [12. What the sources agree on](12-what-the-sources-agree-on.md)
+Next: [12. Core principles](12-what-the-sources-agree-on.md)
