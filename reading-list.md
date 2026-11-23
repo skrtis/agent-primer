@@ -7,7 +7,7 @@ nav_order: 15
 
 Compiled 2026-11-19. Every link was opened and checked.
 
-## Weekend core (in order)
+## Core readings (in order)
 - Lilian Weng, [LLM Powered Autonomous Agents](https://lilianweng.github.io/posts/2023-06-23-agent/) (2023). The classic split into planning, memory and tool use.
 - Barbaste et al., [Harness Engineering: Anatomy, Architecture, and Evolution of Coding Agents](https://arxiv.org/abs/2609.00006) (Jul 2026, preprint). Defines a harness (loop, tools, context management, safety, orchestration, extensions) and maps it across 11 production harnesses from their source code.
 - Drew Breunig, [The State of Context Engineering](https://www.dbreunig.com/2026/10/24/the-state-of-context-engineering.html) (Oct 2026). Four ways context fails and the fixes. Pair with Chroma, [Context Rot](https://www.trychroma.com/research/context-rot): 18 models, task held fixed, only input length varied.
@@ -134,5 +134,5 @@ Recommended readings from Stanford's [CS 329Z: Engineering AI Agents](https://cs
 - Shaikh et al., [Learning Next Action Predictors from Human-Computer Interaction](https://arxiv.org/abs/2603.05923) (2026, optional).
 - [OpenClaw](https://github.com/openclaw/openclaw) (optional). Open-source personal assistant.
 
-## Not checked yet
-- OpenAI blocked automated fetches. Open these yourself: "Harness engineering" (Lopopolo) and "Unrolling the Codex agent loop" (Bolin).
+## Not reviewed yet
+- OpenAI, "Harness engineering" (Lopopolo) and "Unrolling the Codex agent loop" (Bolin).
